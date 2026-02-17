@@ -3,6 +3,7 @@
 # The application includes two main endpoints: one for uploading PDFs and another for retrieving the OCR results. 
 # Then the OCR results are converted from Markdown to HTML .
 
+import json
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse
 import requests
@@ -44,6 +45,9 @@ def markdown_to_html(md: str) -> str:
 
     for raw_line in lines:
         line = raw_line.rstrip()
+
+        # 1️⃣ Remove image placeholders
+        line = re.sub(r"!\[.*?\]\(.*?\)", "", line)
 
         # Empty line → new paragraph
         if not line.strip():
@@ -126,6 +130,10 @@ def get_ocr_result(jobId: str):
         response.raise_for_status()
 
         data = response.json()
+
+        # with open(os.path.join(JOB_DIR, f"ocr_response_{jobId}.json"), "w") as f:
+        #     json.dump(data, f, indent=2)
+
 
         markdown_pages = [
             p["markdown"] for p in data.get("pages", []) if p.get("markdown")
